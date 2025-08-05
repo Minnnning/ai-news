@@ -1,0 +1,21 @@
+# FastAPI 및 서버
+fastapi
+uvicorn[standard]
+
+# 데이터베이스 (PostgreSQL)
+sqlalchemy
+psycopg2-binary
+alembic
+
+# 뉴스 처리 파이프라인
+feedparser
+konlpy
+requests
+beautifulsoup4
+
+# 스케줄러 (주기적인 작업 실행)
+apscheduler
+
+# 구글 Gemini API
+google-generativeai
+python-dotenv # .env 파일 관리를 위해

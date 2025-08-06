@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import date
-import time
+import time, os
 from . import services, crud, models
 from .database import engine, get_db
 
@@ -72,7 +72,11 @@ def full_news_pipeline():
         print("===== 전체 뉴스 처리 파이프라인 종료 =====")
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(full_news_pipeline, 'cron', hour=2, minute=15) #utc 기준임 한국 시간은 17:26
+# 환경 변수에서 시간 설정 읽어오기 (값이 없으면 기본값으로 새벽 4시 0분 UTC 사용)
+cron_hour = int(os.getenv('CRON_HOUR', '4'))
+cron_minute = int(os.getenv('CRON_MINUTE', '0'))
+
+scheduler.add_job(full_news_pipeline, 'cron', hour=cron_hour, minute=cron_minute)
 scheduler.start()
 
 # API 엔드포인트

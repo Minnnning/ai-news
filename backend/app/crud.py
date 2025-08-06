@@ -5,6 +5,13 @@ from sqlalchemy.orm import Session
 from datetime import date
 from . import models
 
+def create_raw_topic(db: Session, topic_text: str):
+    db_topic = models.RawTopic(topic_text=topic_text, created_date=date.today())
+    db.add(db_topic)
+    db.commit()
+    db.refresh(db_topic)
+    return db_topic
+
 def create_refined_topic(db: Session, topic_text: str):
     db_topic = models.RefinedTopic(topic_text=topic_text, created_date=date.today())
     db.add(db_topic)

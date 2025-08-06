@@ -3,6 +3,7 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from apscheduler.schedulers.background import BackgroundScheduler
+from fastapi.middleware.cors import CORSMiddleware
 from datetime import date
 import time
 from . import services, crud, models
@@ -13,13 +14,28 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# 허용할 출처 목록
+origins = [
+    "http://localhost:3000", # React 개발 서버 주소
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,       # origins 목록에 있는 출처의 요청을 허용
+    allow_credentials=True,      # 쿠키를 포함한 요청을 허용
+    allow_methods=["*"],         # 모든 HTTP 메소드(GET, POST 등)를 허용
+    allow_headers=["*"],         # 모든 HTTP 헤더를 허용
+)
+
 def full_news_pipeline():
     print("===== 전체 뉴스 처리 파이프라인 시작 =====")
     db: Session = next(get_db())
     try:
         # Step 1: RSS에서 원시 토픽 추출
         raw_topics = services.fetch_raw_topics_from_rss()
-        print(f"추출된 원시 토픽: {raw_topics[:20]}")
+        for raw_topic in raw_topics:
+            crud.create_raw_topic(db, topic_text=raw_topic)
+        print(f"추출된 원시 토픽: {raw_topics[:10]}")
 
         # Step 2: Gemini로 뉴스 토픽 정제
         refined_topics = services.refine_topics_with_gemini(raw_topics)
@@ -55,9 +71,8 @@ def full_news_pipeline():
         db.close()
         print("===== 전체 뉴스 처리 파이프라인 종료 =====")
 
-# 스케줄러 설정 (매일 새벽 4시에 실행)
 scheduler = BackgroundScheduler()
-scheduler.add_job(full_news_pipeline, 'cron', hour=8, minute=57) #utc 기준임 한국 시간은 17:26
+scheduler.add_job(full_news_pipeline, 'cron', hour=2, minute=15) #utc 기준임 한국 시간은 17:26
 scheduler.start()
 
 # API 엔드포인트

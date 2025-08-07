@@ -1,23 +1,36 @@
-// 3. /frontend/src/App.js
-//    - 날짜별 토픽을 보여주는 메인 UI 컴포넌트
 import React, { useState, useEffect } from 'react';
 import { getSummaries, getAvailableDates } from './api';
+import DateSelector from './components/DateSelector'; 
+import SummaryCard from './components/SummaryCard';   
+import Loading from './components/Loading';     
+import Error from './components/Error';
+import './index.css';
 
 function App() {
     const [summaries, setSummaries] = useState([]);
     const [availableDates, setAvailableDates] = useState([]);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState(null); // 초기값을 null로 변경
     const [loading, setLoading] = useState(true);
 
+    // 사용 가능한 날짜 목록을 가져와서 가장 최신 날짜를 선택하는 로직
     useEffect(() => {
         const fetchDates = async () => {
             const dates = await getAvailableDates();
-            setAvailableDates(dates);
+            if (dates && dates.length > 0) {
+                setAvailableDates(dates);
+                setSelectedDate(dates[0]); // 가장 최신 날짜를 기본 선택
+            } else {
+                 setAvailableDates([]);
+                 setLoading(false); // 날짜가 없으면 로딩 종료
+            }
         };
         fetchDates();
     }, []);
 
+    // 선택된 날짜가 변경될 때마다 해당 날짜의 요약본을 가져오는 로직
     useEffect(() => {
+        if (!selectedDate) return;
+
         const fetchSummaries = async () => {
             setLoading(true);
             const data = await getSummaries(selectedDate);
@@ -27,42 +40,28 @@ function App() {
         fetchSummaries();
     }, [selectedDate]);
 
-    const SummaryCard = ({ data }) => (
-        <div className="topic-card">
-            <h2>토픽: {data.topic}</h2>
-            
-            <h3>AI 요약</h3>
-            <div className="summary-text">{data.summary}</div>
-
-            <h3>용어 설명</h3>
-            <div className="explanation-text">{data.explanation}</div>
-        </div>
-    );
+    // 콘텐츠 렌더링 로직
+    const renderContent = () => {
+        if (loading) {
+            return <Loading selectedDate={selectedDate} />;
+        }
+        if (summaries.length > 0) {
+            return summaries.map((summary, index) => <SummaryCard key={index} data={summary} />);
+        }
+        return <Error />;
+    };
 
     return (
         <div className="container">
             <h1>AI 뉴스 브리핑</h1>
             
-            <div className="date-selector">
-                <h3>날짜 선택</h3>
-                {availableDates.map(date => (
-                    <button 
-                        key={date} 
-                        onClick={() => setSelectedDate(date)}
-                        className={selectedDate === date ? 'active' : ''}
-                    >
-                        {date}
-                    </button>
-                ))}
-            </div>
+            <DateSelector 
+                availableDates={availableDates}
+                selectedDate={selectedDate}
+                onDateSelect={setSelectedDate}
+            />
 
-            {loading ? (
-                <div className="loading">'{selectedDate}'의 뉴스를 불러오는 중...</div>
-            ) : summaries.length > 0 ? (
-                summaries.map((summary, index) => <SummaryCard key={index} data={summary} />)
-            ) : (
-                <div className="error">해당 날짜의 요약된 뉴스가 없습니다.</div>
-            )}
+            {renderContent()}
         </div>
     );
 }

@@ -6,7 +6,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import date
 import time, os
-from . import crud, models, services_gemini_api
+from . import crud, models, services
 from .database import engine, get_db
 
 # DB 테이블 생성
@@ -32,20 +32,20 @@ def full_news_pipeline():
     db: Session = next(get_db())
     try:
         # Step 1: RSS에서 원시 토픽 추출
-        raw_topics = services_gemini_api.fetch_raw_topics_from_rss()
+        raw_topics = services.fetch_raw_topics_from_rss()
         for raw_topic in raw_topics:
             crud.create_raw_topic(db, topic_text=raw_topic)
         print(f"추출된 원시 토픽: {raw_topics}")
 
         # Step 2: Gemini로 뉴스 토픽 정제
-        refined_topics = services_gemini_api.refine_topics_with_gemini(raw_topics)
+        refined_topics = services.refine_topics_with_gemini(raw_topics)
         print(f"정제된 토픽: {refined_topics}")
         time.sleep(5)
 
         for topic_text in refined_topics:
             # Step 3: 토픽 저장 및 기사 검색/스크레이핑
             db_topic = crud.create_refined_topic(db, topic_text=topic_text)
-            articles_data = services_gemini_api.search_and_scrape_articles(topic_text)
+            articles_data = services.search_and_scrape_articles(topic_text)
             print(f"'{topic_text}' 토픽에 대해 {len(articles_data)}개의 기사 수집 완료")
 
             if not articles_data:
@@ -64,7 +64,7 @@ def full_news_pipeline():
                     crud.create_article(db, topic_id=db_topic.id, article_data=article_data)
             
             # Step 4: Gemini로 기사 요약 및 저장
-            summary_data = services_gemini_api.summarize_articles_with_gemini(topic_text, articles_data)
+            summary_data = services.summarize_articles_with_gemini(topic_text, articles_data)
             # summary_data가 유효한 경우에만 DB에 저장합니다.
             if summary_data:
                 crud.create_summary(db, topic_id=db_topic.id, summary_data=summary_data)
@@ -93,10 +93,17 @@ def read_summaries(target_date: date = date.today(), db: Session = Depends(get_d
     summaries = crud.get_summaries_by_date(db, target_date=target_date)
     results = []
     for s in summaries:
+        # s.topic.articles 관계를 통해 원문 기사 목록을 가져옵니다.
+        related_articles = [
+            {"title": article.title, "url": article.url} 
+            for article in s.topic.articles
+        ]
+        
         results.append({
             "topic": s.topic.topic_text,
             "summary": s.summary_text,
-            "explanation": s.term_explanation
+            "explanation": s.term_explanation,
+            "related_articles": related_articles # 응답에 원문 기사 목록 추가
         })
     return results
 

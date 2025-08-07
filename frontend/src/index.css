@@ -23,6 +23,7 @@ h1, h2, h3 {
 }
 .date-selector button {
     margin-right: 10px;
+    margin-bottom: 5px; /* 여러 줄로 표시될 경우를 대비 */
     padding: 8px 15px;
     border: 1px solid #ccc;
     background-color: #f0f0f0;
@@ -53,13 +54,53 @@ h1, h2, h3 {
     padding-left: 10px;
     margin-top: 25px;
 }
-.summary-text, .explanation-text {
+.summary-text {
     line-height: 1.7;
-    white-space: pre-wrap; /* 줄바꿈과 공백을 그대로 표시 */
+    white-space: pre-wrap;
 }
 .loading, .error {
     text-align: center;
     font-size: 1.2em;
     padding: 50px;
     color: #777;
+}
+
+/* --- [추가된 스타일] 접기/펴기 섹션 --- */
+.collapsible-section {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+.collapsible-section summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: #555;
+    list-style-position: inside; /* 화살표 아이콘 위치 조정 */
+}
+.collapsible-section summary:hover {
+    color: #0056b3;
+}
+.collapsible-section[open] > summary {
+    margin-bottom: 10px;
+}
+.explanation-text {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+}
+.article-list {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+.article-list li {
+    margin-bottom: 8px;
+}
+.article-list a {
+    text-decoration: none;
+    color: #0056b3;
+}
+.article-list a:hover {
+    text-decoration: underline;
 }

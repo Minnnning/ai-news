@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 # --- 설정 ---
 NAVER_CLIENT_ID = os.getenv("NAVER_CLIENT_ID")
 NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET")
-LOCAL_AI_URL = "http://minnnningnas.duckdns.org:2021/prompt" # 로컬 AI 서버 주소
+LOCAL_AI_URL = os.getenv("LOCAL_AI_URL")
 
 # RSS 피드 주소 목록
 RSS_FEEDS = [

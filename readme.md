@@ -39,5 +39,9 @@ Core Libraries: APScheduler, feedparser, BeautifulSoup4, KoNLPy
 
 #### version 2: 제목 그대로를 이용해서 ai에게 핫토픽 추출 방식으로 변경
 기존 방법에서 단어 임베딩을 이용해서 관련도 높은 단어나 구를 묶어서 해볼려 했지만 단어 임베딩이 컴퓨팅 자원을 많이 소모하기 때문에 version2 방법을 이용
+&nbsp;
 
+#### version 3: ui 변경 용어 정리, 원본 기사 url등
+<center><img src="https://image.minnnningnas.duckdns.org/images/e92c3956-385d-4c59-a3e4-284bf0bbe2c1.webp" style="zoom:20%;"></center>
+<center><img src="https://image.minnnningnas.duckdns.org/images/be1e3222-df73-4879-9a0e-cc0201633bda.webp" style="zoom:20%;"></center>
 

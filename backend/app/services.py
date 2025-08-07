@@ -1,61 +1,57 @@
-# 3. /backend/app/services.py
-#    - 실제 데이터 처리 로직을 담당하는 함수들을 정의
+# /backend/app/services.py
+
 import os
 import feedparser
-import requests
-import google.generativeai as genai
+import requests # Gemini 대신 requests를 사용합니다.
 from bs4 import BeautifulSoup
-# from konlpy.tag import Okt
-# from collections import Counter
 
 # --- 설정 ---
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 NAVER_CLIENT_ID = os.getenv("NAVER_CLIENT_ID")
 NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET")
+LOCAL_AI_URL = "http://minnnningnas.duckdns.org:2021/prompt" # 로컬 AI 서버 주소
+
 # RSS 피드 주소 목록
 RSS_FEEDS = [
-    "https://www.yonhapnewstv.co.kr/browse/feed/", # 연합뉴스
-    "https://www.hani.co.kr/rss/", # 한겨레
-    "https://www.khan.co.kr/rss/rssdata/total_news.xml", # 경향신문
-    #"https://news-ex.jtbc.co.kr/v1/get/rss/newsflesh", #jtbc 속보
-    "https://news-ex.jtbc.co.kr/v1/get/rss/issue", # jtbc 이슈
-    #"https://news.sbs.co.kr/news/newsflashRssFeed.do?plink=RSSREADER", # sbs 최신
-    #"https://news.sbs.co.kr/news/headlineRssFeed.do?plink=RSSREADER", # sbs 이시간 이슈
-    #"https://news.sbs.co.kr/news/TopicRssFeed.do?plink=RSSREADER", # SBS 이시각 인기
-    #"https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml", # 조선
-    "https://www.hankyung.com/feed/all-news", # 한국경제 전체
-    "https://www.hankyung.com/feed/it", # 한국 경제 it
-    #"https://www.mk.co.kr/rss/40300001/", #매일경제
-    # ... 추가하고 싶은 다른 언론사 RSS 주소
+    "https://www.yonhapnewstv.co.kr/browse/feed/",
+    "https://www.hani.co.kr/rss/",
+    "https://www.khan.co.kr/rss/rssdata/total_news.xml",
+    "https://news-ex.jtbc.co.kr/v1/get/rss/issue",
+    "https://www.hankyung.com/feed/all-news",
+    "https://www.hankyung.com/feed/it",
 ]
+
+# --- [새로운 함수] 로컬 AI 서버에 요청을 보내는 헬퍼 함수 ---
+def _query_local_ai(prompt: str):
+    """주어진 프롬프트를 로컬 AI 서버로 보내고 응답 텍스트를 받습니다."""
+    try:
+        # POST 요청으로 body에 prompt를 담아 보냅니다.
+        response = requests.post(LOCAL_AI_URL, json={"prompt": prompt}, timeout=180) # 타임아웃을 넉넉하게 설정
+        response.raise_for_status() # 200번대 응답이 아니면 에러 발생
+        return response.text # 순수 텍스트 응답을 반환
+    except requests.exceptions.RequestException as e:
+        print(f"로컬 AI 서버 요청 실패: {e}")
+        return None
 
 # --- Step 1: RSS에서 원시 토픽 추출 ---
 def fetch_raw_topics_from_rss():
     all_title = []
-
     print("RSS 피드에서 제목 추출을 시작합니다...")
     for url in RSS_FEEDS:
         try:
             feed = feedparser.parse(url)
             for entry in feed.entries:
-                title = entry.title
-                all_title.append(title)
+                all_title.append(entry.title)
         except Exception as e:
             print(f"{url} 피드 처리 중 오류 발생: {e}")
             continue
+    return all_title if all_title else []
 
-    if not all_title:
-        print("추출된 제목이 없습니다")
-        return []
-
-    return all_title
-
-# --- Step 2: Gemini로 뉴스 토픽 정제 ---
+# --- Step 2: 로컬 AI로 뉴스 토픽 정제 ---
 def refine_topics_with_gemini(raw_topics):
-    model = genai.GenerativeModel('gemini-1.5-flash')
     prompt = f'''
     다음은 오늘 뉴스 헤드라인에서 추출한 제목 목록입니다.
-    이 중에서 현재 가장 중요하고 사람들이 관심을 가질 만한 뉴스 검색 단어 5개를 선정해주세요.
+    이 중에서 현재 가장 중요하고 내가 관심을 가질 만한 뉴스 검색 단어 10개를 선정해주세요.
+    it에 관심이 많고 세계, 사회 순서로 관심이 있다.
     이 단어를 이용해서 다시 기사를 검색할 예정입니다 그렇기 때문에 같은 제목에 있는 단어나 유사한 단어는 최소화 해주세요.
     그렇지 않다면 기사 검색시 중복된 기사가 포함 될 수 있습니다.
     각 토픽은 쉼표(,)로 구분해서 한 줄로만 답변해주세요.
@@ -66,8 +62,15 @@ def refine_topics_with_gemini(raw_topics):
     [답변 예시]
     A, B, C, D, E
     '''
-    response = model.generate_content(prompt)
-    refined_topics = [topic.strip() for topic in response.text.split(',')]
+    
+    # Gemini API 대신 로컬 AI 서버 호출
+    response_text = _query_local_ai(prompt)
+    
+    if not response_text:
+        print("로컬 AI로부터 토픽 정제 응답을 받지 못했습니다.")
+        return []
+        
+    refined_topics = [topic.strip() for topic in response_text.split(',')]
     return refined_topics
 
 # --- Step 3: 네이버 검색 및 BeautifulSoup 스크레이핑 ---
@@ -87,7 +90,7 @@ def search_and_scrape_articles(topic_text):
     for item in items:
         article_url = item.get('link')
         if not article_url or 'n.news.naver.com' not in article_url:
-            continue # 네이버 뉴스 링크가 아니면 건너뛰기
+            continue
         
         try:
             article_response = requests.get(article_url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -109,53 +112,46 @@ def search_and_scrape_articles(topic_text):
             
     return scraped_articles
 
-# --- Step 4: Gemini로 기사 요약 ---
+# --- Step 4: 로컬 AI로 기사 요약 ---
 def summarize_articles_with_gemini(topic_text, articles):
-    try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        
-        full_text = ""
-        for i, article in enumerate(articles):
-            full_text += f"--- 기사 {i+1}: {article['title']} ---\n{article['content']}\n\n"
+    full_text = ""
+    for i, article in enumerate(articles):
+        full_text += f"--- 기사 {i+1}: {article['title']} ---\n{article['content']}\n\n"
 
-        prompt = f'''
-        당신은 핵심을 정확히 파악하는 전문 뉴스 애널리스트입니다.
-        아래는 '{topic_text}'와 관련된 여러 기사 본문입니다.
+    prompt = f'''
+    당신은 핵심을 정확히 파악하는 전문 뉴스 애널리스트입니다.
+    아래는 '{topic_text}'와 관련된 여러 기사 본문입니다.
 
-        [기사 묶음]
-        {full_text}
+    [기사 묶음]
+    {full_text}
 
-        [요청]
-        1. 모든 기사의 내용을 종합하여, 이 토픽의 핵심 상황을 3~5문장의 완결된 문단으로 요약해주세요.
-        2. 기사에 나온 전문적이거나 어려운 용어 2~3개를 골라, 초등학생도 이해할 수 있도록 쉽게 설명해주세요.
-        
-        [답변 형식]
-        ### 요약 ###
-        (여기에 요약 내용 작성)
-        ### 용어 설명 ###
-        - **용어1:** (쉬운 설명)
-        - **용어2:** (쉬운 설명)
-        '''
-        
-        response = model.generate_content(prompt)
-        
-        # AI의 답변이 안전 설정 등으로 인해 차단되었는지 확인
-        if not response.parts:
-            print(f"'{topic_text}' 토픽에 대한 AI 응답이 차단되었습니다 (안전 설정 등).")
-            return None
+    [요청]
+    1. 모든 기사의 내용을 종합하여, 이 토픽의 핵심 상황을 완결된 문단으로 요약해주세요.
+    2. 내용이 조금 길더라도 이해하는데 부족함이 없도록 요약해주세요.
+    3. 기사에 나온 전문적이거나 어려운 용어를 골라, 초등학생도 이해할 수 있도록 쉽게 설명해주세요.
+    
+    [답변 형식]
+    ### 요약 ###
+    (여기에 요약 내용 작성)
+    ### 용어 설명 ###
+    - **용어1:** (쉬운 설명)
+    - **용어2:** (쉬운 설명)
+    '''
+    
+    # Gemini API 대신 로컬 AI 서버 호출
+    response_text = _query_local_ai(prompt)
 
-        # 응답 텍스트 파싱
-        parts = response.text.split("### 용어 설명 ###")
-        if len(parts) < 2:
-            print(f"'{topic_text}' 토픽에 대한 AI 응답 형식이 올바르지 않습니다.")
-            return None # 형식이 맞지 않으면 None 반환
-
-        summary_text = parts[0].replace("### 요약 ###", "").strip()
-        term_explanation = parts[1].strip()
-        
-        return {"summary": summary_text, "explanation": term_explanation}
-
-    except Exception as e:
-        # 그 외 모든 예외 상황 처리
-        print(f"'{topic_text}' 토픽 요약 중 에러 발생: {e}")
+    if not response_text:
+        print(f"'{topic_text}' 토픽에 대한 로컬 AI 응답이 없습니다.")
         return None
+
+    # 응답 텍스트 파싱
+    parts = response_text.split("### 용어 설명 ###")
+    if len(parts) < 2:
+        print(f"'{topic_text}' 토픽에 대한 로컬 AI 응답 형식이 올바르지 않습니다.")
+        return None
+
+    summary_text = parts[0].replace("### 요약 ###", "").strip()
+    term_explanation = parts[1].strip()
+    
+    return {"summary": summary_text, "explanation": term_explanation}

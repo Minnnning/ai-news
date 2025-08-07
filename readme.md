@@ -33,4 +33,11 @@ Core Libraries: APScheduler, feedparser, BeautifulSoup4, KoNLPy
 &nbsp;
 ## 개발 진행
 #### version 1: rss 분석으로 나온 토픽들이 현재 상황(오늘의 이슈)과 맞지 않는 경우가 많아서 개선이 필요
+기존 제목에서 단어(구 추출도 해봄)를 추출 후 단어의 개수를 conter로 체크 제일 많은 빈도수로 핫토픽을 선정했지만 같은 단어지만 의미가 다르고 정확성이 매우 떨어졌음
 <center><img src="https://image.minnnningnas.duckdns.org/images/47cbcc2d-906c-4768-b59a-337a34e33e78.webp" style="zoom:20%;"></center>
+&nbsp;
+
+#### version 2: 제목 그대로를 이용해서 ai에게 핫토픽 추출 방식으로 변경
+기존 방법에서 단어 임베딩을 이용해서 관련도 높은 단어나 구를 묶어서 해볼려 했지만 단어 임베딩이 컴퓨팅 자원을 많이 소모하기 때문에 version2 방법을 이용
+
+

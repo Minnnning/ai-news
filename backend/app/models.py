@@ -10,13 +10,15 @@ class RawTopic(Base):
     id = Column(Integer, primary_key=True)
     topic_text = Column(String, index=True)
     created_date = Column(Date, server_default=func.current_date())
+    period = Column(String, default='오전', comment="실행 시간대 (오전/오후)")
 
 class RefinedTopic(Base):
     __tablename__ = "refined_topics"
     id = Column(Integer, primary_key=True)
     topic_text = Column(String, index=True)
     created_date = Column(Date, server_default=func.current_date())
-    
+    period = Column(String, default='오전', comment="실행 시간대 (오전/오후)")
+
     articles = relationship("Article", back_populates="topic")
     summary = relationship("Summary", uselist=False, back_populates="topic")
 

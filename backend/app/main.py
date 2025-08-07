@@ -27,14 +27,14 @@ app.add_middleware(
     allow_headers=["*"],         # 모든 HTTP 헤더를 허용
 )
 
-def full_news_pipeline():
-    print("===== 전체 뉴스 처리 파이프라인 시작 =====")
+def full_news_pipeline(period: str): # '오전' 또는 '오후'를 인자로 받음
+    print(f"===== {period} 뉴스 처리 파이프라인 시작 =====")
     db: Session = next(get_db())
     try:
         # Step 1: RSS에서 원시 토픽 추출
         raw_topics = services.fetch_raw_topics_from_rss()
         for raw_topic in raw_topics:
-            crud.create_raw_topic(db, topic_text=raw_topic)
+            crud.create_raw_topic(db, topic_text=raw_topic, period=period)
         print(f"추출된 원시 토픽: {raw_topics}")
 
         # Step 2: Gemini로 뉴스 토픽 정제
@@ -44,7 +44,7 @@ def full_news_pipeline():
 
         for topic_text in refined_topics:
             # Step 3: 토픽 저장 및 기사 검색/스크레이핑
-            db_topic = crud.create_refined_topic(db, topic_text=topic_text)
+            db_topic = crud.create_refined_topic(db, topic_text=topic_text, period=period)
             articles_data = services.search_and_scrape_articles(topic_text)
             print(f"'{topic_text}' 토픽에 대해 {len(articles_data)}개의 기사 수집 완료")
 
@@ -77,20 +77,26 @@ def full_news_pipeline():
 
     finally:
         db.close()
-        print("===== 전체 뉴스 처리 파이프라인 종료 =====")
+        print(f"===== {period} 뉴스 처리 파이프라인 종료 =====")
+
+# 환경 변수에서 시간 설정 읽어오기 (값이 없으면 기본값으로 8시 0분 UTC 사용)
+m_cron_hour = int(os.getenv('M_CRON_HOUR', '8'))
+m_cron_minute = int(os.getenv('M_CRON_MINUTE', '0'))
+
+a_cron_hour = int(os.getenv('A_CRON_HOUR', '15'))
+a_cron_minute = int(os.getenv('A_CRON_MINUTE', '0'))
 
 scheduler = BackgroundScheduler()
-# 환경 변수에서 시간 설정 읽어오기 (값이 없으면 기본값으로 새벽 4시 0분 UTC 사용)
-cron_hour = int(os.getenv('CRON_HOUR', '4'))
-cron_minute = int(os.getenv('CRON_MINUTE', '0'))
-
-scheduler.add_job(full_news_pipeline, 'cron', hour=cron_hour, minute=cron_minute)
+# 오전 8시 실행 (오전 파이프라인)
+scheduler.add_job(full_news_pipeline, 'cron', hour=m_cron_hour, minute=m_cron_minute, args=['오전'])
+# 오후 3시 실행 (오후 파이프라인)
+scheduler.add_job(full_news_pipeline, 'cron', hour=a_cron_hour, minute=a_cron_minute, args=['오후'])
 scheduler.start()
 
 # API 엔드포인트
 @app.get("/api/summaries")
-def read_summaries(target_date: date = date.today(), db: Session = Depends(get_db)):
-    summaries = crud.get_summaries_by_date(db, target_date=target_date)
+def read_summaries(target_date: date, target_period: str, db: Session = Depends(get_db)):
+    summaries = crud.get_summaries_by_date_and_period(db, target_date=target_date, target_period=target_period)
     results = []
     for s in summaries:
         # s.topic.articles 관계를 통해 원문 기사 목록을 가져옵니다.
@@ -107,10 +113,9 @@ def read_summaries(target_date: date = date.today(), db: Session = Depends(get_d
         })
     return results
 
-@app.get("/api/available-dates")
-def read_available_dates(db: Session = Depends(get_db)):
-    dates = crud.get_available_dates(db)
-    return [d[0] for d in dates]
+@app.get("/api/available-periods")
+def read_available_periods(db: Session = Depends(get_db)):
+    return crud.get_available_periods_by_date(db)
 
 @app.on_event("shutdown")
 def shutdown_event():

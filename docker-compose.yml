@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build: ./backend
@@ -10,8 +8,9 @@ services:
     depends_on:
       - db
     environment:
+      - TZ=Asia/Seoul
       - DATABASE_URL=postgresql://user:password@db/newsdb
-    env_file: # .env 파일을 사용하도록 이 부분을 추가/수정합니다.
+    env_file:
       - ./backend/.env
 
   frontend:
@@ -26,12 +25,15 @@ services:
     tty: true
     depends_on:
       - backend
+    environment:
+      - TZ=Asia/Seoul
 
   db:
     image: postgres:13
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
+      - TZ=Asia/Seoul
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=newsdb

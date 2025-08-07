@@ -49,3 +49,7 @@ def get_summaries_by_date(db: Session, target_date: date):
 
 def get_available_dates(db: Session):
     return db.query(models.RefinedTopic.created_date).distinct().order_by(models.RefinedTopic.created_date.desc()).all()
+
+def get_article_by_url(db: Session, url: str):
+    """URL을 기준으로 기존 기사가 있는지 확인합니다."""
+    return db.query(models.Article).filter(models.Article.url == url).first()

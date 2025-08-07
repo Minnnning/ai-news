@@ -35,11 +35,12 @@ def full_news_pipeline():
         raw_topics = services.fetch_raw_topics_from_rss()
         for raw_topic in raw_topics:
             crud.create_raw_topic(db, topic_text=raw_topic)
-        print(f"추출된 원시 토픽: {raw_topics[:10]}")
+        print(f"추출된 원시 토픽: {raw_topics}")
 
         # Step 2: Gemini로 뉴스 토픽 정제
         refined_topics = services.refine_topics_with_gemini(raw_topics)
         print(f"정제된 토픽: {refined_topics}")
+        time.sleep(5)
 
         for topic_text in refined_topics:
             # Step 3: 토픽 저장 및 기사 검색/스크레이핑
@@ -50,10 +51,17 @@ def full_news_pipeline():
             if not articles_data:
                 continue
             
-            db_articles = []
             for article_data in articles_data:
-                db_article = crud.create_article(db, topic_id=db_topic.id, article_data=article_data)
-                db_articles.append(db_article)
+                # DB에 해당 URL의 기사가 이미 있는지 확인
+                existing_article = crud.get_article_by_url(db, url=article_data['url'])
+                
+                if existing_article:
+                    # 이미 존재하면, 새로 저장하지 않고 건너뜁니다.
+                    print(f"이미 존재하는 기사입니다 (저장 건너뛰기): {article_data['url']}")
+                else:
+                    # 존재하지 않으면, 새로 생성합니다.
+                    print(f"새로운 기사를 저장합니다: {article_data['url']}")
+                    crud.create_article(db, topic_id=db_topic.id, article_data=article_data)
             
             # Step 4: Gemini로 기사 요약 및 저장
             summary_data = services.summarize_articles_with_gemini(topic_text, articles_data)

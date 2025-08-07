@@ -5,7 +5,8 @@ import feedparser
 import requests
 import google.generativeai as genai
 from bs4 import BeautifulSoup
-from konlpy.tag import Okt
+# from konlpy.tag import Okt
+# from collections import Counter
 
 # --- 설정 ---
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -16,43 +17,54 @@ RSS_FEEDS = [
     "https://www.yonhapnewstv.co.kr/browse/feed/", # 연합뉴스
     "https://www.hani.co.kr/rss/", # 한겨레
     "https://www.khan.co.kr/rss/rssdata/total_news.xml", # 경향신문
-    "https://news-ex.jtbc.co.kr/v1/get/rss/newsflesh", #jtbc 속보
+    #"https://news-ex.jtbc.co.kr/v1/get/rss/newsflesh", #jtbc 속보
     "https://news-ex.jtbc.co.kr/v1/get/rss/issue", # jtbc 이슈
-    "https://news.sbs.co.kr/news/newsflashRssFeed.do?plink=RSSREADER", # sbs 최신
-    "https://news.sbs.co.kr/news/headlineRssFeed.do?plink=RSSREADER", # sbs 이시간 이슈
-    "https://news.sbs.co.kr/news/TopicRssFeed.do?plink=RSSREADER", # SBS 이시각 인기
-    "https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml", # 조선
+    #"https://news.sbs.co.kr/news/newsflashRssFeed.do?plink=RSSREADER", # sbs 최신
+    #"https://news.sbs.co.kr/news/headlineRssFeed.do?plink=RSSREADER", # sbs 이시간 이슈
+    #"https://news.sbs.co.kr/news/TopicRssFeed.do?plink=RSSREADER", # SBS 이시각 인기
+    #"https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml", # 조선
     "https://www.hankyung.com/feed/all-news", # 한국경제 전체
     "https://www.hankyung.com/feed/it", # 한국 경제 it
-    "https://www.mk.co.kr/rss/40300001/", #매일경제
+    #"https://www.mk.co.kr/rss/40300001/", #매일경제
     # ... 추가하고 싶은 다른 언론사 RSS 주소
 ]
 
 # --- Step 1: RSS에서 원시 토픽 추출 ---
 def fetch_raw_topics_from_rss():
-    okt = Okt()
-    stopwords = ['오늘', '속보', '사진', '기자', '뉴스', '종합', '단독']
-    all_nouns = []
+    all_title = []
+
+    print("RSS 피드에서 제목 추출을 시작합니다...")
     for url in RSS_FEEDS:
-        feed = feedparser.parse(url)
-        for entry in feed.entries:
-            nouns = okt.nouns(entry.title)
-            all_nouns.extend([n for n in nouns if n not in stopwords and len(n) > 1])
-    return list(set(all_nouns)) # 중복 제거
+        try:
+            feed = feedparser.parse(url)
+            for entry in feed.entries:
+                title = entry.title
+                all_title.append(title)
+        except Exception as e:
+            print(f"{url} 피드 처리 중 오류 발생: {e}")
+            continue
+
+    if not all_title:
+        print("추출된 제목이 없습니다")
+        return []
+
+    return all_title
 
 # --- Step 2: Gemini로 뉴스 토픽 정제 ---
 def refine_topics_with_gemini(raw_topics):
     model = genai.GenerativeModel('gemini-1.5-flash')
     prompt = f'''
-    다음은 오늘 뉴스 헤드라인에서 추출한 키워드 목록입니다.
-    이 중에서 현재 가장 중요하고 사람들이 관심을 가질 만한 뉴스 검색 토픽 3~5개를 선정해주세요.
+    다음은 오늘 뉴스 헤드라인에서 추출한 제목 목록입니다.
+    이 중에서 현재 가장 중요하고 사람들이 관심을 가질 만한 뉴스 검색 단어 5개를 선정해주세요.
+    이 단어를 이용해서 다시 기사를 검색할 예정입니다 그렇기 때문에 같은 제목에 있는 단어나 유사한 단어는 최소화 해주세요.
+    그렇지 않다면 기사 검색시 중복된 기사가 포함 될 수 있습니다.
     각 토픽은 쉼표(,)로 구분해서 한 줄로만 답변해주세요.
 
     [키워드 목록]
     {', '.join(raw_topics)}
 
     [답변 예시]
-    부동산 대책,금리 인상,우크라이나 전쟁,신규 전염병,반도체 산업
+    A, B, C, D, E
     '''
     response = model.generate_content(prompt)
     refined_topics = [topic.strip() for topic in response.text.split(',')]
@@ -99,7 +111,6 @@ def search_and_scrape_articles(topic_text):
 
 # --- Step 4: Gemini로 기사 요약 ---
 def summarize_articles_with_gemini(topic_text, articles):
-    # --- 이 함수 전체를 아래 코드로 교체해주세요 ---
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
         

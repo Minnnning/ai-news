@@ -20,12 +20,13 @@ export const getSummaries = async (date, period) => {
     }
 };
 
-export const getAvailablePeriods = async () => {
+export const getAvailableDatePeriods = async () => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/available-periods`);
+        // 변경된 API 엔드포인트 호출
+        const response = await axios.get(`${API_BASE_URL}/available-date-periods`);
         return response.data;
     } catch (error) {
         console.error("날짜/시간대 목록을 가져오는 데 실패했습니다.", error);
-        return {};
+        return []; // 실패 시 빈 배열 반환
     }
 };

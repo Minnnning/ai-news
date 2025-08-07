@@ -113,9 +113,9 @@ def read_summaries(target_date: date, target_period: str, db: Session = Depends(
         })
     return results
 
-@app.get("/api/available-periods")
-def read_available_periods(db: Session = Depends(get_db)):
-    return crud.get_available_periods_by_date(db)
+@app.get("/api/available-date-periods")
+def read_available_date_periods(db: Session = Depends(get_db)):
+    return crud.get_available_date_periods(db)
 
 @app.on_event("shutdown")
 def shutdown_event():

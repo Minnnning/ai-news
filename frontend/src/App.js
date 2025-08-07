@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSummaries, getAvailablePeriods } from './api';
+import { getSummaries, getAvailableDatePeriods } from './api';
 import SummaryCard from './components/SummaryCard';
 import Loading from './components/Loading';
 import Error from './components/Error';
@@ -7,44 +7,42 @@ import './index.css';
 
 function App() {
     const [summaries, setSummaries] = useState([]);
-    const [availablePeriods, setAvailablePeriods] = useState({});
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [selectedPeriod, setSelectedPeriod] = useState(null);
+    const [availableSelections, setAvailableSelections] = useState([]); // 통합된 선택지 상태
+    const [currentSelection, setCurrentSelection] = useState(null); // 현재 선택된 항목 상태
     const [loading, setLoading] = useState(true);
 
+    // 초기 데이터 로딩: 날짜/시간대 선택지 목록을 가져옵니다.
     useEffect(() => {
         const fetchInitialData = async () => {
-            const periodsData = await getAvailablePeriods();
-            setAvailablePeriods(periodsData);
+            const selections = await getAvailableDatePeriods();
+            setAvailableSelections(selections);
             
-            const dates = Object.keys(periodsData);
-            if (dates.length > 0) {
-                const latestDate = dates.sort().reverse()[0];
-                setSelectedDate(latestDate);
-                // 해당 날짜의 첫 번째 시간대(오후/오전 순)를 기본 선택
-                setSelectedPeriod(periodsData[latestDate][0]);
+            if (selections && selections.length > 0) {
+                // 가장 첫 번째 항목 (최신 날짜/시간대)을 기본 선택으로 설정
+                setCurrentSelection(selections[0]);
             } else {
-                setLoading(false);
+                setLoading(false); // 데이터가 없으면 로딩 종료
             }
         };
         fetchInitialData();
     }, []);
 
+    // 선택된 항목이 변경될 때마다 요약본 데이터를 가져옵니다.
     useEffect(() => {
-        if (!selectedDate || !selectedPeriod) return;
+        if (!currentSelection) return;
 
         const fetchSummaries = async () => {
             setLoading(true);
-            const data = await getSummaries(selectedDate, selectedPeriod);
+            const data = await getSummaries(currentSelection.date, currentSelection.period);
             setSummaries(data);
             setLoading(false);
         };
         fetchSummaries();
-    }, [selectedDate, selectedPeriod]);
+    }, [currentSelection]);
 
     const renderContent = () => {
         if (loading) {
-            return <Loading selectedDate={selectedDate} />;
+            return <Loading selectedDate={currentSelection?.date} />;
         }
         if (summaries.length > 0) {
             return summaries.map((summary, index) => <SummaryCard key={index} data={summary} />);
@@ -52,26 +50,25 @@ function App() {
         return <Error />;
     };
 
-    const availableDates = Object.keys(availablePeriods).sort().reverse();
-
     return (
         <div className="container">
             <h1>AI 뉴스 브리핑</h1>
             
             <div className="date-selector">
-                <h3>날짜 선택</h3>
-                {availableDates.length > 0 ? (
-                    availableDates.map(date => (
+                <h3>날짜 및 시간대 선택</h3>
+                {availableSelections.length > 0 ? (
+                    availableSelections.map((selection, index) => (
                         <button 
-                            key={date} 
-                            onClick={() => {
-                                setSelectedDate(date);
-                                // 날짜 변경 시 해당 날짜의 첫 번째 시간대를 기본 선택
-                                setSelectedPeriod(availablePeriods[date][0]);
-                            }}
-                            className={selectedDate === date ? 'active' : ''}
+                            key={index} 
+                            onClick={() => setCurrentSelection(selection)}
+                            className={
+                                currentSelection &&
+                                currentSelection.date === selection.date &&
+                                currentSelection.period === selection.period
+                                ? 'active' : ''
+                            }
                         >
-                            {date}
+                            {`${selection.date} ${selection.period}`}
                         </button>
                     ))
                 ) : (
@@ -79,19 +76,7 @@ function App() {
                 )}
             </div>
 
-            {selectedDate && (
-                <div className="period-selector">
-                    {availablePeriods[selectedDate]?.map(period => (
-                        <button
-                            key={period}
-                            onClick={() => setSelectedPeriod(period)}
-                            className={selectedPeriod === period ? 'active' : ''}
-                        >
-                            {period}
-                        </button>
-                    ))}
-                </div>
-            )}
+            {/* period-selector div는 이제 필요 없으므로 제거됩니다. */}
 
             {renderContent()}
         </div>

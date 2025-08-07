@@ -51,8 +51,18 @@ def get_summaries_by_date_and_period(db: Session, target_date: date, target_peri
         models.RefinedTopic.period == target_period
     ).all()
 
-def get_available_dates(db: Session):
-    return db.query(models.RefinedTopic.created_date).distinct().order_by(models.RefinedTopic.created_date.desc()).all()
+def get_available_date_periods(db: Session):
+    # 날짜와 시간대를 함께 조회하고, 최신순으로 정렬
+    results = db.query(
+        models.RefinedTopic.created_date,
+        models.RefinedTopic.period
+    ).distinct().order_by(desc(models.RefinedTopic.created_date), desc(models.RefinedTopic.period)).all()
+    
+    # [{'date': '2025-08-08', 'period': '오후'}, ...] 형태로 데이터 가공
+    date_periods = [
+        {"date": d.isoformat(), "period": p} for d, p in results
+    ]
+    return date_periods
 
 def get_article_by_url(db: Session, url: str):
     """URL을 기준으로 기존 기사가 있는지 확인합니다."""

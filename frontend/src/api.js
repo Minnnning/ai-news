@@ -3,11 +3,11 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api'; // 개발 환경
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
 export const getSummaries = async (date, period) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/summaries`, {
+        const response = await axios.get(`${API_BASE_URL}/api/summaries`, {
             params: { 
                 target_date: date,
                 target_period: period 
@@ -23,7 +23,7 @@ export const getSummaries = async (date, period) => {
 export const getAvailableDatePeriods = async () => {
     try {
         // 변경된 API 엔드포인트 호출
-        const response = await axios.get(`${API_BASE_URL}/available-date-periods`);
+        const response = await axios.get(`${API_BASE_URL}/api/available-date-periods`);
         return response.data;
     } catch (error) {
         console.error("날짜/시간대 목록을 가져오는 데 실패했습니다.", error);

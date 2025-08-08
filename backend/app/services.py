@@ -116,7 +116,8 @@ def search_and_scrape_articles(topic_text):
 def summarize_articles_with_gemini(topic_text, articles):
     full_text = ""
     for i, article in enumerate(articles):
-        full_text += f"--- 기사 {i+1}: {article['title']} ---\n{article['content']}\n\n"
+            # 딕셔너리 키 접근(article['title']) 대신 객체 속성 접근(article.title)으로 변경
+            full_text += f"--- 기사 {i+1}: {article.title} ---\n{article.content}\n\n"
 
     prompt = f'''
     당신은 핵심을 정확히 파악하는 전문 뉴스 애널리스트입니다.

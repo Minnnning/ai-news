@@ -50,21 +50,25 @@ def full_news_pipeline(period: str): # '오전' 또는 '오후'를 인자로 받
 
             if not articles_data:
                 continue
-            
+
+            articles_for_summary = [] # 요약에 사용할 기사 목록 (모델 객체)
+
             for article_data in articles_data:
                 # DB에 해당 URL의 기사가 이미 있는지 확인
                 existing_article = crud.get_article_by_url(db, url=article_data['url'])
                 
                 if existing_article:
-                    # 이미 존재하면, 새로 저장하지 않고 건너뜁니다.
-                    print(f"이미 존재하는 기사입니다 (저장 건너뛰기): {article_data['url']}")
+                    # 이미 존재하면, DB에서 가져온 객체를 사용합니다.
+                    print(f"이미 존재하는 기사입니다 (요약에 사용): {article_data['url']}")
+                    articles_for_summary.append(existing_article)
                 else:
-                    # 존재하지 않으면, 새로 생성합니다.
+                    # 존재하지 않으면, 새로 생성하고 그 객체를 사용합니다.
                     print(f"새로운 기사를 저장합니다: {article_data['url']}")
-                    crud.create_article(db, topic_id=db_topic.id, article_data=article_data)
+                    db_article = crud.create_article(db, topic_id=db_topic.id, article_data=article_data)
+                    articles_for_summary.append(db_article)
             
             # Step 4: Gemini로 기사 요약 및 저장
-            summary_data = services.summarize_articles_with_gemini(topic_text, articles_data)
+            summary_data = services.summarize_articles_with_gemini(topic_text, articles_for_summary)
             # summary_data가 유효한 경우에만 DB에 저장합니다.
             if summary_data:
                 crud.create_summary(db, topic_id=db_topic.id, summary_data=summary_data)

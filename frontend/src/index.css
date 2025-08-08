@@ -104,3 +104,28 @@ h1, h2, h3 {
 .article-list a:hover {
     text-decoration: underline;
 }
+@media (max-width: 768px) {
+    body {
+        padding: 0; /* 모바일에서는 body 패딩을 완전히 제거 */
+    }
+
+    .container {
+        /* 좌우 여백을 줄여서 콘텐츠 영역을 넓힙니다. */
+        padding: 20px 15px;
+        /* 모바일에서는 둥근 모서리와 그림자를 제거하여 더 깔끔하게 보이도록 합니다. */
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    h1 {
+        font-size: 1.8em; /* 제목 폰트 크기 조정 */
+    }
+
+    .topic-card h2 {
+        font-size: 1.3em; /* 토픽 제목 폰트 크기 조정 */
+    }
+
+    .topic-card {
+        padding: 20px; /* 카드 내부 여백 조정 */
+    }
+}

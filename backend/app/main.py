@@ -14,9 +14,10 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+ALLOW_ORIGIN = os.getenv("ALLOW_ORIGIN")
 # 허용할 출처 목록
 origins = [
-    "http://localhost:3000", # React 개발 서버 주소
+    ALLOW_ORIGIN, # React 개발 서버 주소
 ]
 
 app.add_middleware(

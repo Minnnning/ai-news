@@ -6,8 +6,8 @@ services:
     volumes:
       - ./backend/app:/app
     depends_on:
-      db:
-        condition: service_healthy
+      db: # 'db' 서비스에 대한 의존성 설정
+        condition: service_healthy # db 서비스가 healthy 상태가 될 때까지 기다립니다.
     environment:
       - TZ=Asia/Seoul
       - DATABASE_URL=postgresql://user:password@db/newsdb
@@ -19,8 +19,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      # Nginx 컨테이너의 80 포트를 호스트의 3000 포트와 연결
-      - "3000:80"
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+    stdin_open: true
+    tty: true
     depends_on:
       - backend
     environment:
@@ -30,7 +33,7 @@ services:
     image: postgres:13
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    healthcheck:
+    healthcheck: # --- DB 준비 상태 확인 ---
       test: ["CMD-SHELL", "pg_isready -U user -d newsdb"]
       interval: 5s
       timeout: 5s

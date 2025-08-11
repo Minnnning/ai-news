@@ -1,6 +1,7 @@
 services:
   backend:
     build: ./backend
+    restart: unless-stopped
     ports:
       - "8000:8000"
     volumes:
@@ -18,6 +19,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       # Nginx 컨테이너의 80 포트를 호스트의 3000 포트와 연결
       - "3000:80"
@@ -28,6 +30,7 @@ services:
 
   db:
     image: postgres:13
+    restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     healthcheck:

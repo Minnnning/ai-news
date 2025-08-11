@@ -50,4 +50,8 @@ Core Libraries: APScheduler, feedparser, BeautifulSoup4, KoNLPy
 
 하루 2번 오전 오후 기사 수집 및 요약
 모바일 뷰 대응
-<table><td><center><img alt="원래" src="https://image.minnnningnas.duckdns.org/images/1ffb2c77-1ee6-4f57-9ba3-64665275e66e.webp" style="zoom:30%;" /></center></td><td><center> ➡️ </center></td><td><center><img alt="" src="https://image.minnnningnas.duckdns.org/images/3a4763d0-7254-4614-9c53-44c56b0b862f.webp" style="zoom:30%;" /></center></td></table>
+<table><td><center><img alt="원래" src="https://image.minnnningnas.duckdns.org/images/1ffb2c77-1ee6-4f57-9ba3-64665275e66e.webp" style="zoom:20%;" /></center></td><td><center> ➡️ </center></td><td><center><img alt="" src="https://image.minnnningnas.duckdns.org/images/3a4763d0-7254-4614-9c53-44c56b0b862f.webp" style="zoom:20%;" /></center></td></table>
+
+&nbsp;
+단어 설명기능 툴팁 추가
+<center><img src="https://image.minnnningnas.duckdns.org/images/18f04a33-dd9e-48b1-ba71-23eccd19897b.webp" style="zoom:20%;"></center>

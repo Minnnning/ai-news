@@ -3,7 +3,7 @@ body {
     background-color: #f4f7f9;
     color: #333;
     margin: 0;
-    padding: 20px;
+    padding: 20px 0;
 }
 .container {
     max-width: 900px;
@@ -23,7 +23,7 @@ h1, h2, h3 {
 }
 .date-selector button {
     margin-right: 10px;
-    margin-bottom: 5px; /* 여러 줄로 표시될 경우를 대비 */
+    margin-bottom: 5px;
     padding: 8px 15px;
     border: 1px solid #ccc;
     background-color: #f0f0f0;
@@ -55,7 +55,7 @@ h1, h2, h3 {
     margin-top: 25px;
 }
 .summary-text {
-    line-height: 1.7;
+    line-height: 1.8;
     white-space: pre-wrap;
 }
 .loading, .error {
@@ -64,8 +64,6 @@ h1, h2, h3 {
     padding: 50px;
     color: #777;
 }
-
-/* --- [추가된 스타일] 접기/펴기 섹션 --- */
 .collapsible-section {
     margin-top: 20px;
     border-top: 1px solid #eee;
@@ -75,20 +73,6 @@ h1, h2, h3 {
     cursor: pointer;
     font-weight: bold;
     color: #555;
-    list-style-position: inside; /* 화살표 아이콘 위치 조정 */
-}
-.collapsible-section summary:hover {
-    color: #0056b3;
-}
-.collapsible-section[open] > summary {
-    margin-bottom: 10px;
-}
-.explanation-text {
-    background-color: #f9f9f9;
-    padding: 15px;
-    border-radius: 5px;
-    line-height: 1.7;
-    white-space: pre-wrap;
 }
 .article-list {
     list-style-type: disc;
@@ -104,28 +88,43 @@ h1, h2, h3 {
 .article-list a:hover {
     text-decoration: underline;
 }
-@media (max-width: 768px) {
-    body {
-        padding: 0; /* 모바일에서는 body 패딩을 완전히 제거 */
-    }
 
+.term-highlight {
+    background-color: #e7f5ff;
+    color: #0056b3;
+    padding: 2px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+.term-highlight:hover {
+    background-color: #cce7ff;
+}
+
+.tooltip-bubble {
+    position: fixed;
+    background-color: #333;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    max-width: 300px;
+    font-size: 0.9em;
+    line-height: 1.5;
+    z-index: 1000;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+    body { padding: 0; }
     .container {
-        /* 좌우 여백을 줄여서 콘텐츠 영역을 넓힙니다. */
         padding: 20px 15px;
-        /* 모바일에서는 둥근 모서리와 그림자를 제거하여 더 깔끔하게 보이도록 합니다. */
         border-radius: 0;
         box-shadow: none;
     }
-
-    h1 {
-        font-size: 1.8em; /* 제목 폰트 크기 조정 */
-    }
-
-    .topic-card h2 {
-        font-size: 1.3em; /* 토픽 제목 폰트 크기 조정 */
-    }
-
-    .topic-card {
-        padding: 20px; /* 카드 내부 여백 조정 */
-    }
+    h1 { font-size: 1.8em; }
+    .topic-card h2 { font-size: 1.3em; }
+    .topic-card { padding: 20px; }
 }

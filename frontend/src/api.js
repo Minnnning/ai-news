@@ -30,3 +30,15 @@ export const getAvailableDatePeriods = async () => {
         return []; // 실패 시 빈 배열 반환
     }
 };
+
+export const getWordCloudData = async (date, period) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/api/wordcloud`, {
+            params: { target_date: date, target_period: period }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("워드 클라우드 데이터를 가져오는 데 실패했습니다.", error);
+        return [];
+    }
+};

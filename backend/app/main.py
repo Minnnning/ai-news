@@ -32,54 +32,39 @@ def full_news_pipeline(period: str): # '오전' 또는 '오후'를 인자로 받
     print(f"===== {period} 뉴스 처리 파이프라인 시작 =====")
     db: Session = next(get_db())
     try:
-        # Step 1: RSS에서 원시 토픽 추출
         raw_topics = services.fetch_raw_topics_from_rss()
         for raw_topic in raw_topics:
             crud.create_raw_topic(db, topic_text=raw_topic, period=period)
-        print(f"추출된 원시 토픽: {raw_topics}")
-
-        # Step 2: Gemini로 뉴스 토픽 정제
-        refined_topics = services.refine_topics_with_gemini(raw_topics)
-        print(f"정제된 토픽: {refined_topics}")
+        print(f"추출된 원시 토픽(제목) 수: {len(raw_topics)}")
+        refined_topics_with_counts = services.refine_topics_with_gemini(raw_topics)
+        print(f"AI가 정제한 토픽과 빈도수: {refined_topics_with_counts}")
         time.sleep(5)
-
-        for topic_text in refined_topics:
-            # Step 3: 토픽 저장 및 기사 검색/스크레이핑
-            db_topic = crud.create_refined_topic(db, topic_text=topic_text, period=period)
+        for topic_data in refined_topics_with_counts:
+            topic_text = topic_data['topic']
+            topic_count = topic_data['count']
+            db_topic = crud.create_refined_topic(db, topic_text=topic_text, period=period, count=topic_count)
             articles_data = services.search_and_scrape_articles(topic_text)
             print(f"'{topic_text}' 토픽에 대해 {len(articles_data)}개의 기사 수집 완료")
-
-            if not articles_data:
-                continue
-
-            articles_for_summary = [] # 요약에 사용할 기사 목록 (모델 객체)
-
+            if not articles_data: continue
+            articles_for_summary = []
             for article_data in articles_data:
-                # DB에 해당 URL의 기사가 이미 있는지 확인
                 existing_article = crud.get_article_by_url(db, url=article_data['url'])
-                
                 if existing_article:
-                    # 이미 존재하면, DB에서 가져온 객체를 사용합니다.
-                    print(f"이미 존재하는 기사입니다 (요약에 사용): {article_data['url']}")
                     articles_for_summary.append(existing_article)
                 else:
-                    # 존재하지 않으면, 새로 생성하고 그 객체를 사용합니다.
-                    print(f"새로운 기사를 저장합니다: {article_data['url']}")
                     db_article = crud.create_article(db, topic_id=db_topic.id, article_data=article_data)
                     articles_for_summary.append(db_article)
-            
-            # Step 4: Gemini로 기사 요약 및 저장
             summary_data = services.summarize_articles_with_gemini(topic_text, articles_for_summary)
-            # summary_data가 유효한 경우에만 DB에 저장합니다.
             if summary_data:
                 crud.create_summary(db, topic_id=db_topic.id, summary_data=summary_data)
                 print(f"'{topic_text}' 토픽 요약 완료 및 저장")
             else:
                 print(f"'{topic_text}' 토픽에 대한 요약 생성에 실패하여 건너뜁니다.")
-
             print("API 속도 제한을 위해 5초 대기합니다...")
             time.sleep(5)
-
+    except Exception as e:
+        print(f"파이프라인 실행 중 심각한 오류 발생: {e}")
+        db.rollback()
     finally:
         db.close()
         print(f"===== {period} 뉴스 처리 파이프라인 종료 =====")
@@ -99,6 +84,11 @@ scheduler.add_job(full_news_pipeline, 'cron', hour=a_cron_hour, minute=a_cron_mi
 scheduler.start()
 
 # API 엔드포인트
+@app.get("/api/wordcloud")
+def get_wordcloud(target_date: date, target_period: str, db: Session = Depends(get_db)):
+    """워드 클라우드 데이터를 반환합니다."""
+    return crud.get_wordcloud_data(db, target_date=target_date, target_period=target_period)
+
 @app.get("/api/summaries")
 def read_summaries(target_date: date, target_period: str, db: Session = Depends(get_db)):
     summaries = crud.get_summaries_by_date_and_period(db, target_date=target_date, target_period=target_period)

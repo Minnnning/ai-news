@@ -13,8 +13,14 @@ def create_raw_topic(db: Session, topic_text: str, period: str):
     db.refresh(db_topic)
     return db_topic
 
-def create_refined_topic(db: Session, topic_text: str, period: str):
-    db_topic = models.RefinedTopic(topic_text=topic_text, period=period, created_date=date.today())
+def create_refined_topic(db: Session, topic_text: str, period: str, count: int):
+    """토픽과 빈도수를 함께 저장합니다."""
+    db_topic = models.RefinedTopic(
+        topic_text=topic_text,
+        period=period,
+        created_date=date.today(),
+        count=count
+    )
     db.add(db_topic)
     db.commit()
     db.refresh(db_topic)
@@ -83,3 +89,12 @@ def get_available_periods_by_date(db: Session):
             periods_by_date[date_str] = []
         periods_by_date[date_str].append(p)
     return periods_by_date
+
+def get_wordcloud_data(db: Session, target_date: date, target_period: str):
+    """특정 날짜와 시간대의 RefinedTopic 데이터를 워드 클라우드 형식으로 반환합니다."""
+    topics = db.query(models.RefinedTopic).filter(
+        models.RefinedTopic.created_date == target_date,
+        models.RefinedTopic.period == target_period
+    ).order_by(desc(models.RefinedTopic.count)).all()
+    
+    return [{"text": topic.topic_text, "value": topic.count} for topic in topics]

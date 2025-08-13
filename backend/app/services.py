@@ -2,7 +2,6 @@
 
 import os
 import feedparser
-import json
 import requests # Gemini 대신 requests를 사용합니다.
 from bs4 import BeautifulSoup
 
@@ -26,7 +25,7 @@ def _query_local_ai(prompt: str):
     """주어진 프롬프트를 로컬 AI 서버로 보내고 응답 텍스트를 받습니다."""
     try:
         # POST 요청으로 body에 prompt를 담아 보냅니다.
-        response = requests.post(LOCAL_AI_URL, json={"prompt": prompt}, timeout=240) # 타임아웃을 넉넉하게 설정
+        response = requests.post(LOCAL_AI_URL, json={"prompt": prompt}, timeout=180) # 타임아웃을 넉넉하게 설정
         response.raise_for_status() # 200번대 응답이 아니면 에러 발생
         return response.text # 순수 텍스트 응답을 반환
     except requests.exceptions.RequestException as e:
@@ -49,45 +48,30 @@ def fetch_raw_topics_from_rss():
 
 # --- Step 2: 로컬 AI로 뉴스 토픽 정제 ---
 def refine_topics_with_gemini(raw_topics):
-    # AI에게 전달할 헤드라인 목록을 문자열로 변환
-    headlines_str = "\\n".join(f"- {title}" for title in raw_topics)
-
     prompt = f'''
-    당신은 뉴스 빅데이터 분석 전문가입니다.
-    아래에 제공된 뉴스 헤드라인 목록을 분석하여 다음 과업을 수행해주세요.
+    다음은 오늘 뉴스 헤드라인에서 추출한 제목 목록입니다.
+    이 중에서 현재 가장 중요(빈도수가 높음)하고 내가 관심을 가질 만한 뉴스 검색 단어 10개를 선정해주세요.
+    난 it에 관심이 많고 세계, 사회 순서로 관심이 있다.
+    이 단어를 이용해서 다시 기사를 검색할 예정입니다 그렇기 때문에 같은 제목에 있는 단어나 유사한 단어는 최소화 해주세요.
+    그렇지 않다면 기사 검색시 중복된 기사가 포함 될 수 있습니다.
+    각 토픽은 쉼표(,)로 구분해서 한 줄로만 답변해주세요.
 
-    [과업]
-    1. 의미적으로 유사한 헤드라인들을 그룹으로 묶어주세요.
-    2. 이 중에서 현재 가장 중요하고 내가 관심을 가질 만한 뉴스 검색 단어 10개를 선정해주세요. it에 관심이 많고 세계, 사회 순서로 관심이 있다.
-    3. 각 그룹에 포함된 헤드라인의 개수를 세어 빈도수(count)를 계산해주세요.
-    4. 이 단어를 이용해서 다시 기사를 검색할 예정입니다. 그렇기 때문에 같은 제목에 있는 단어나 유사한 단어는 최소화 해주세요.
-    5. 최종 결과를 반드시 아래 예시와 같은 JSON 배열 형식으로만 답변해주세요. 다른 설명은 절대 추가하지 마세요.
+    [키워드 목록]
+    {', '.join(raw_topics)}
 
-    [뉴스 헤드라인 목록]
-    {headlines_str}
-
-    [JSON 답변 예시]
-    [
-      {{"topic": "A", "count": 15}},
-      {{"topic": "B", "count": 12}},
-      {{"topic": "C", "count": 9}}
-    ]
+    [답변 예시]
+    A, B, C, D, E
     '''
     
+    # Gemini API 대신 로컬 AI 서버 호출
     response_text = _query_local_ai(prompt)
     
     if not response_text:
         print("로컬 AI로부터 토픽 정제 응답을 받지 못했습니다.")
         return []
         
-    try:
-        # AI 응답 텍스트를 JSON으로 파싱
-        cleaned_response = response_text.strip().replace('```json', '').replace('```', '')
-        refined_topics_with_counts = json.loads(cleaned_response)
-        return refined_topics_with_counts
-    except json.JSONDecodeError:
-        print(f"로컬 AI의 응답을 JSON으로 파싱하는 데 실패했습니다. 응답: {response_text}")
-        return []
+    refined_topics = [topic.strip() for topic in response_text.split(',')]
+    return refined_topics
 
 # --- Step 3: 네이버 검색 및 BeautifulSoup 스크레이핑 ---
 def search_and_scrape_articles(topic_text):

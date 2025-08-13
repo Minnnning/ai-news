@@ -117,21 +117,6 @@ h1, h2, h3 {
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-.wordcloud-container {
-    margin-bottom: 30px;
-    padding: 20px;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    background-color: #fdfdfd;
-}
-.wordcloud-wrapper {
-    width: 100%;
-    min-height: 100px; /* 최소 높이를 지정하여 기본 크기를 유지하되, 내용이 많아지면 늘어날 수 있도록 합니다. */
-    /*max-height: 300px; */
-    position: relative;
-    overflow: hidden; /*-> 이 줄을 제거하여 내용이 컨테이너를 넘어서도 보이도록 합니다. */
-}
-
 @media (max-width: 768px) {
     body { padding: 0; }
     .container {

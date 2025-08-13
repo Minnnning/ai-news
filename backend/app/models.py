@@ -1,4 +1,4 @@
-# /backend/app/models.py
+# /backend/app/models.py  <- 이 파일의 전체 내용이 아래와 같아야 합니다.
 
 from sqlalchemy import Column, Integer, String, Text, Date, func, ForeignKey
 from sqlalchemy.orm import relationship
@@ -18,8 +18,6 @@ class RefinedTopic(Base):
     topic_text = Column(String, index=True)
     created_date = Column(Date, server_default=func.current_date())
     period = Column(String, default='오전', comment="실행 시간대 (오전/오후)")
-    # AI가 계산한 토픽의 빈도수를 저장합니다.
-    count = Column(Integer, server_default='1', nullable=False)
 
     articles = relationship("Article", back_populates="topic")
     summary = relationship("Summary", uselist=False, back_populates="topic")

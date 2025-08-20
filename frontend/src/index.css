@@ -117,6 +117,56 @@ h1, h2, h3 {
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
+.date-navigator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px; /* 간격 조정 */
+}
+
+.date-navigator .current-date {
+    font-size: 1.2em;
+    font-weight: 500;
+    color: #333;
+    min-width: 200px; /* 너비 고정으로 레이아웃 이동 방지 */
+    text-align: center;
+    padding: 8px 15px;
+    background-color: #f0f0f0;
+    border-radius: 20px;
+}
+
+.date-navigator button {
+    border: 1px solid #ccc;
+    background-color: #fff;
+    border-radius: 50%; /* 원형 버튼 */
+    width: 40px;
+    height: 40px;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+}
+
+.date-navigator button:hover {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.date-navigator button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: #f0f0f0;
+    border-color: #ccc;
+    color: #999;
+}
+
 @media (max-width: 768px) {
     body { padding: 0; }
     .container {

@@ -36,7 +36,7 @@ Core Libraries: APScheduler, feedparser, BeautifulSoup4, KoNLPy
 ## 개발 진행
 ### version 1: rss 분석으로 나온 토픽들이 현재 상황(오늘의 이슈)과 맞지 않는 경우가 많아서 개선이 필요
 기존 제목에서 단어(구 추출도 해봄)를 추출 후 단어의 개수를 conter로 체크 제일 많은 빈도수로 핫토픽을 선정했지만 같은 단어지만 의미가 다르고 정확성이 매우 떨어졌음
-<center><img src="https://image.minnnningnas.duckdns.org/images/47cbcc2d-906c-4768-b59a-337a34e33e78.webp" style="zoom:20%;"></center>
+<center><img src="https://image.minnnning.kr/images/47cbcc2d-906c-4768-b59a-337a34e33e78.webp" style="zoom:20%;"></center>
 &nbsp;
 
 ### version 2: 제목 그대로를 이용해서 ai에게 핫토픽 추출 방식으로 변경
@@ -45,13 +45,17 @@ Core Libraries: APScheduler, feedparser, BeautifulSoup4, KoNLPy
 
 ### version 3: ui 변경 용어 정리, 원본 기사 url등
 프론트엔드 변경 + gemini-api를 이용하는 과정에서 리미트에 걸리는 경우가 생겨 로컬에 gemini cil를 실행시켜 cli를 이용해서 ai를 사용함
-<center><img src="https://image.minnnningnas.duckdns.org/images/e92c3956-385d-4c59-a3e4-284bf0bbe2c1.webp" style="zoom:20%;"></center>
-<center><img src="https://image.minnnningnas.duckdns.org/images/be1e3222-df73-4879-9a0e-cc0201633bda.webp" style="zoom:20%;"></center>
+<center><img src="https://image.minnnningn.kr/images/e92c3956-385d-4c59-a3e4-284bf0bbe2c1.webp" style="zoom:20%;"></center>
+<center><img src="https://image.minnnning.kr/images/be1e3222-df73-4879-9a0e-cc0201633bda.webp" style="zoom:20%;"></center>
 
 하루 2번 오전 오후 기사 수집 및 요약
 모바일 뷰 대응
-<table><td><center><img alt="원래" src="https://image.minnnningnas.duckdns.org/images/1ffb2c77-1ee6-4f57-9ba3-64665275e66e.webp" style="zoom:20%;" /></center></td><td><center> ➡️ </center></td><td><center><img alt="" src="https://image.minnnningnas.duckdns.org/images/3a4763d0-7254-4614-9c53-44c56b0b862f.webp" style="zoom:20%;" /></center></td></table>
+<table><td><center><img alt="원래" src="https://image.minnnning.kr/images/1ffb2c77-1ee6-4f57-9ba3-64665275e66e.webp" style="zoom:20%;" /></center></td><td><center> ➡️ </center></td><td><center><img alt="" src="https://image.minnnning.kr/images/3a4763d0-7254-4614-9c53-44c56b0b862f.webp" style="zoom:20%;" /></center></td></table>
 
 &nbsp;
 단어 설명기능 툴팁 추가
-<center><img src="https://image.minnnningnas.duckdns.org/images/18f04a33-dd9e-48b1-ba71-23eccd19897b.webp" style="zoom:20%;"></center>
+<center><img src="https://image.minnnning.kr/images/18f04a33-dd9e-48b1-ba71-23eccd19897b.webp" style="zoom:20%;"></center>
+
+&nbsp;
+날짜 선택창 변경
+<center><img src="https://image.minnnning.kr/images/bbc70343-1c11-4b7a-9e33-e52e7d2e1254.webp" style="zoom:20%;"></center>

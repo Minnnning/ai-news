@@ -1,22 +1,20 @@
 import React from 'react';
 
-const DateSelector = ({ availableDates, selectedDate, onDateSelect }) => {
+const DateSelector = ({ selection, onPrev, onNext, isPrevDisabled, isNextDisabled }) => {
     return (
         <div className="date-selector">
-            <h3>날짜 선택</h3>
-            {availableDates.length > 0 ? (
-                availableDates.map(date => (
-                    <button
-                        key={date}
-                        onClick={() => onDateSelect(date)}
-                        className={selectedDate === date ? 'active' : ''}
-                    >
-                        {date}
-                    </button>
-                ))
-            ) : (
-                <p>요약된 뉴스가 아직 없습니다.</p>
-            )}
+            <h3>날짜 및 시간대 선택</h3>
+            <div className="date-navigator">
+                <button onClick={onPrev} disabled={isPrevDisabled} aria-label="Previous Date">
+                    &lt;
+                </button>
+                <span className="current-date">
+                    {selection ? `${selection.date} ${selection.period}` : '로딩...'}
+                </span>
+                <button onClick={onNext} disabled={isNextDisabled} aria-label="Next Date">
+                    &gt;
+                </button>
+            </div>
         </div>
     );
 };

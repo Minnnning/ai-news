@@ -3,13 +3,17 @@ import { getSummaries, getAvailableDatePeriods } from './api';
 import SummaryCard from './components/SummaryCard';
 import Loading from './components/Loading';
 import Error from './components/Error';
+import DateSelector from './components/DateSelector'; // DateSelector import
 import './index.css';
 
 function App() {
     const [summaries, setSummaries] = useState([]);
-    const [availableSelections, setAvailableSelections] = useState([]); // 통합된 선택지 상태
-    const [currentSelection, setCurrentSelection] = useState(null); // 현재 선택된 항목 상태
+    const [availableSelections, setAvailableSelections] = useState([]);
+    const [currentIndex, setCurrentIndex] = useState(0); // 현재 선택된 항목의 인덱스
     const [loading, setLoading] = useState(true);
+
+    // 현재 선택된 항목 객체
+    const currentSelection = availableSelections[currentIndex];
 
     // 초기 데이터 로딩: 날짜/시간대 선택지 목록을 가져옵니다.
     useEffect(() => {
@@ -17,11 +21,8 @@ function App() {
             const selections = await getAvailableDatePeriods();
             setAvailableSelections(selections);
             
-            if (selections && selections.length > 0) {
-                // 가장 첫 번째 항목 (최신 날짜/시간대)을 기본 선택으로 설정
-                setCurrentSelection(selections[0]);
-            } else {
-                setLoading(false); // 데이터가 없으면 로딩 종료
+            if (!selections || selections.length === 0) {
+                setLoading(false);
             }
         };
         fetchInitialData();
@@ -40,7 +41,21 @@ function App() {
         fetchSummaries();
     }, [currentSelection]);
 
+    // 이전 날짜/시간대로 이동하는 함수
+    const handlePrev = () => {
+        setCurrentIndex(prevIndex => Math.min(availableSelections.length - 1, prevIndex + 1));
+    };
+
+    // 다음 날짜/시간대로 이동하는 함수 (인덱스 감소)
+    const handleNext = () => {
+        setCurrentIndex(prevIndex => Math.max(0, prevIndex - 1));
+    };
+
     const renderContent = () => {
+        // availableSelections가 로딩 중일 때도 로딩 표시
+        if (availableSelections.length === 0 && loading) {
+             return <Loading selectedDate="날짜" />;
+        }
         if (loading) {
             return <Loading selectedDate={currentSelection?.date} />;
         }
@@ -54,29 +69,13 @@ function App() {
         <div className="container">
             <h1>AI 뉴스 브리핑</h1>
             
-            <div className="date-selector">
-                <h3>날짜 및 시간대 선택</h3>
-                {availableSelections.length > 0 ? (
-                    availableSelections.map((selection, index) => (
-                        <button 
-                            key={index} 
-                            onClick={() => setCurrentSelection(selection)}
-                            className={
-                                currentSelection &&
-                                currentSelection.date === selection.date &&
-                                currentSelection.period === selection.period
-                                ? 'active' : ''
-                            }
-                        >
-                            {`${selection.date} ${selection.period}`}
-                        </button>
-                    ))
-                ) : (
-                    !loading && <p>요약된 뉴스가 아직 없습니다.</p>
-                )}
-            </div>
-
-            {/* period-selector div는 이제 필요 없으므로 제거됩니다. */}
+            <DateSelector 
+                selection={currentSelection}
+                onPrev={handlePrev} // 왼쪽 화살표 (<)
+                onNext={handleNext} // 오른쪽 화살표 (>)
+                isPrevDisabled={currentIndex >= availableSelections.length - 1} // 가장 오래된 날짜에서 비활성화
+                isNextDisabled={currentIndex === 0} // 가장 최신 날짜에서 비활성화
+            />
 
             {renderContent()}
         </div>

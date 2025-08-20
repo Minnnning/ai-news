@@ -45,7 +45,7 @@ Core Libraries: APScheduler, feedparser, BeautifulSoup4, KoNLPy
 
 ### version 3: ui 변경 용어 정리, 원본 기사 url등
 프론트엔드 변경 + gemini-api를 이용하는 과정에서 리미트에 걸리는 경우가 생겨 로컬에 gemini cil를 실행시켜 cli를 이용해서 ai를 사용함
-<center><img src="https://image.minnnningn.kr/images/e92c3956-385d-4c59-a3e4-284bf0bbe2c1.webp" style="zoom:20%;"></center>
+<center><img src="https://image.minnnning.kr/images/e92c3956-385d-4c59-a3e4-284bf0bbe2c1.webp" style="zoom:20%;"></center>
 <center><img src="https://image.minnnning.kr/images/be1e3222-df73-4879-9a0e-cc0201633bda.webp" style="zoom:20%;"></center>
 
 하루 2번 오전 오후 기사 수집 및 요약

@@ -56,10 +56,10 @@ jobs:
             cd /home/minjeong/ai-news
             
             # Docker Hub에서 최신 이미지들을 내려받음
-            docker-compose pull
+            docker compose pull
             
             # 최신 이미지로 컨테이너를 다시 시작함
-            docker-compose up -d --force-recreate
+            docker compose up -d --force-recreate
             
             # 사용하지 않는 이전 Docker 이미지들을 정리하여 용량 확보
             docker image prune -f

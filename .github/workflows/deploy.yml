@@ -1,0 +1,78 @@
+# 워크플로우의 이름
+name: CI/CD for News Service
+
+# 언제 이 워크플로우를 실행할지 정의 (main 브랜치에 push될 때)
+on:
+  push:
+    branches: [ main ]
+
+# 실행될 작업(job)들을 정의
+jobs:
+  # 백엔드 빌드 및 푸시 작업
+  build-backend:
+    runs-on: ubuntu-latest # 작업이 실행될 가상 환경
+    steps:
+      # 1. GitHub 저장소의 코드를 가상 환경으로 가져옴
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      # 2. Docker Hub에 로그인
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 3. 백엔드 Docker 이미지 빌드 및 푸시
+      - name: Build and push Backend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend # 빌드할 폴더
+          push: true # 빌드 후 Docker Hub에 푸시
+          tags: ${{ secrets.DOCKER_USERNAME }}/news-backend:latest # 이미지 이름:태그
+
+  # 프론트엔드 빌드 및 푸시 작업
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/news-frontend:latest
+
+  # 서버에 배포하는 작업
+  deploy:
+    needs: [build-backend, build-frontend] # 두 빌드 작업이 성공해야 실행됨
+    runs-on: ubuntu-latest
+    steps:
+      # 1. SSH로 서버에 접속하여 배포 스크립트 실행
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 7778
+          script: |
+            # 프로젝트 폴더로 이동
+            cd /home/minjeong/ai-news
+            
+            # Docker Hub에서 최신 이미지들을 내려받음
+            docker-compose pull
+            
+            # 최신 이미지로 컨테이너를 다시 시작함
+            docker-compose up -d --force-recreate
+            
+            # 사용하지 않는 이전 Docker 이미지들을 정리하여 용량 확보
+            docker image prune -f
